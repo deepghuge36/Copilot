@@ -1,12 +1,14 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import "../styles/message.css";
 
 const Message = ({ message }) => {
   console.log("Rendering message:", message);
-  const { content, sender, timestamp } = message;
+  const { content, sender, timestamp, type } = message;
   const isUser = sender === "user";
+  const isPoll = type === "poll";
 
   const formattedTime = new Date(timestamp).toLocaleTimeString([], {
     hour: "2-digit",
@@ -23,8 +25,17 @@ const Message = ({ message }) => {
         <div className="message-content">
           {isUser ? (
             content
+          ) : isPoll ? (
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]} 
+              rehypePlugins={[rehypeRaw]}
+            >
+              {content}
+            </ReactMarkdown>
           ) : (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {content}
+            </ReactMarkdown>
           )}
         </div>
         <div className="message-timestamp">{formattedTime}</div>

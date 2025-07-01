@@ -99,6 +99,11 @@ export const ChatProvider = ({ children }) => {
         throw new Error("Not connected to MCP server");
       }
 
+      // Check if the message is a special command
+      if (content.trim().toLowerCase().startsWith("show poll")) {
+        return handleShowPollCommand(content);
+      }
+
       // Add user message to chat
       const userMessage = {
         id: Date.now().toString(),
@@ -243,7 +248,54 @@ export const ChatProvider = ({ children }) => {
     }
   }
 
+  // Handle the 'show poll' command
+  const handleShowPollCommand = async (content) => {
+    const pollUrl = extractUrl(content);
+
+    // Add user message to chat
+    const userMessage = {
+      id: Date.now().toString(),
+      content,
+      sender: "user",
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+    if (!pollUrl) {
+      // No valid URL found
+      const errorMessage = {
+        id: Date.now().toString() + "-error",
+        content: "⚠️ Please provide a valid Opinary poll URL after 'show poll'",
+        sender: "system",
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      return;
+    }
+
+    // Add bot response with the embedded poll
+    const botMessage = {
+      id: Date.now().toString() + "-poll",
+      content: `Here's the poll from: ${pollUrl}\n\n<iframe src="${pollUrl}" width="100%" height="500px" frameborder="0" scrolling="no"></iframe>`,
+      sender: "bot",
+      timestamp: new Date().toISOString(),
+      type: "poll",
+    };
+
+    setMessages((prevMessages) => [...prevMessages, botMessage]);
+    return botMessage;
+  };
+
   return (
     <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>
   );
+};
+
+// Helper function to extract URL from text
+const extractUrl = (text) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const matches = text.match(urlRegex);
+  return matches ? matches[0] : null;
 };

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "React Chatbox Extension",
+  "name": "Opinary AI",
   "version": "1.0.0",
   "description": "A Chrome extension with React chatbox and MCP connection",
   "background": {
@@ -9,15 +9,15 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "https://opinary.com/wp-content/uploads/2022/09/Website-favicon-2022-v2-01.svg",
-      "48": "https://opinary.com/wp-content/uploads/2022/09/Website-favicon-2022-v2-01.svg",
-      "128": "https://opinary.com/wp-content/uploads/2022/09/Website-favicon-2022-v2-01.svg"
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
     }
   },
   "icons": {
-    "16": "https://opinary.com/wp-content/uploads/2022/09/Website-favicon-2022-v2-01.svg",
-    "48": "https://opinary.com/wp-content/uploads/2022/09/Website-favicon-2022-v2-01.svg",
-    "128": "https://opinary.com/wp-content/uploads/2022/09/Website-favicon-2022-v2-01.svg"
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
   },
   "permissions": ["storage", "activeTab"],
   "content_scripts": [

@@ -3,57 +3,10 @@
 
 console.log("React Chatbox Extension content script loaded");
 
-// Function to extract all visible text from the page
-function getAllTextFromPage() {
-  // Get all text nodes in the body
-  const textNodes = [];
-  const walker = document.createTreeWalker(
-    document.body,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode: function (node) {
-        // Filter out script and style text nodes
-        if (
-          node.parentNode.tagName === "SCRIPT" ||
-          node.parentNode.tagName === "STYLE" ||
-          node.parentNode.tagName === "NOSCRIPT" ||
-          node.textContent.trim() === ""
-        ) {
-          return NodeFilter.FILTER_REJECT;
-        }
-
-        // Check if the node is visible
-        const style = window.getComputedStyle(node.parentNode);
-        if (
-          style.display === "none" ||
-          style.visibility === "hidden" ||
-          style.opacity === "0"
-        ) {
-          return NodeFilter.FILTER_REJECT;
-        }
-
-        return NodeFilter.FILTER_ACCEPT;
-      },
-    }
-  );
-
-  while (walker.nextNode()) {
-    textNodes.push(walker.currentNode.textContent.trim());
-  }
-
-  // Combine all text and clean it up
-  let allText = textNodes.join("\n").replace(/\s+/g, " ").trim();
-
-  // Add page title and URL
-  const pageInfo = `Title: ${document.title}\nURL: ${window.location.href}\n\nContent:\n`;
-
-  return pageInfo + allText;
-}
-
 // Listen for messages from the background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "getPageContent") {
-    // Example of collecting page content for MCP context
+    // Basic page context without extracting all text
     const pageContent = {
       title: document.title,
       url: window.location.href,
@@ -62,24 +15,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         document.querySelector('meta[name="description"]')?.content || "",
     };
     sendResponse(pageContent);
-  }
-
-  if (message.action === "getAllPageText") {
-    try {
-      const allText = getAllTextFromPage();
-      sendResponse({
-        success: true,
-        text: allText,
-        url: window.location.href,
-        title: document.title,
-      });
-    } catch (error) {
-      console.error("Error extracting page text:", error);
-      sendResponse({
-        success: false,
-        error: error.message,
-      });
-    }
   }
 
   return true;

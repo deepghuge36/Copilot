@@ -17,8 +17,8 @@ body {
 
 /* Light/Dark theme support */
 :root {
-  --primary-color: #4285f4;
-  --secondary-color: #34a853;
+  --primary-color: #f9a524;
+  --secondary-color: #a85f34;
   --text-color: #202124;
   --background-color: #ffffff;
   --input-background: #f1f3f4;
@@ -28,7 +28,7 @@ body {
 }
 
 .dark-theme {
-  --primary-color: #8ab4f8;
+  --primary-color: #f9a524;
   --secondary-color: #81c995;
   --text-color: #e8eaed;
   --background-color: #202124;

@@ -42,3 +42,64 @@
 .message-content {
   white-space: pre-wrap;
 }
+
+/* Markdown styles */
+.bot-message .message-content code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.9em;
+}
+
+.bot-message .message-content pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.bot-message .message-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.bot-message .message-content blockquote {
+  border-left: 3px solid #ccc;
+  margin-left: 0;
+  padding-left: 10px;
+  color: #666;
+}
+
+.bot-message .message-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.bot-message .message-content th,
+.bot-message .message-content td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.bot-message .message-content th {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.bot-message .message-content ul,
+.bot-message .message-content ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.bot-message .message-content a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.bot-message .message-content a:hover {
+  text-decoration: underline;
+}

@@ -3,6 +3,8 @@
  *
  * This file contains utilities for working with the Model Context Protocol (MCP)
  * specification for connecting to AI model backends.
+ *
+ * Note: This file avoids DOM/browser APIs that might not be available in service workers
  */
 
 /**
@@ -30,9 +32,103 @@ export const formatMcpMessage = (content, options = {}) => {
 export const parseMcpResponse = (response) => {
   // Handle different response formats based on MCP specification
   if (!response) {
+    console.error("No response received");
     return {
       content: "No response received",
       type: "error",
+    };
+  }
+
+  console.log("Parsing response:", JSON.stringify(response, null, 2));
+
+  // Handle direct string response
+  if (typeof response === "string") {
+    console.log("Processing direct string response");
+    return {
+      id: Date.now().toString(),
+      content: response,
+      timestamp: new Date().toISOString(),
+      type: "text",
+    };
+  }
+
+  // Handle the specific format from your MCP server (primary format)
+  // response.response.content[{type:"text", text:"message"}]
+  if (
+    response.response &&
+    response.response.content &&
+    Array.isArray(response.response.content)
+  ) {
+    console.log(
+      "Processing Anthropic Claude API format (response.response.content)"
+    );
+    const textContents = response.response.content
+      .filter((item) => item.type === "text")
+      .map((item) => item.text)
+      .join("\n\n");
+
+    console.log("Extracted text content:", textContents);
+
+    return {
+      id: response.response.id || Date.now().toString(),
+      content: textContents || "No text content found in response",
+      timestamp: new Date().toISOString(),
+      type: "text",
+    };
+  }
+
+  // Handle Claude API format (content array with text objects)
+  if (response.content && Array.isArray(response.content)) {
+    const textContents = response.content
+      .filter((item) => item.type === "text")
+      .map((item) => item.text)
+      .join("\n\n");
+
+    return {
+      id: response.id || Date.now().toString(),
+      content: textContents || "No text content found in response",
+      timestamp: new Date().toISOString(),
+      type: "text",
+    };
+  }
+
+  // Handle the specific format from the provided endpoint
+  if (response.response || response.content || response.result) {
+    // Check if response.response is a Claude API object
+    if (
+      response.response &&
+      typeof response.response === "object" &&
+      response.response.content &&
+      Array.isArray(response.response.content)
+    ) {
+      const textContents = response.response.content
+        .filter((item) => item.type === "text")
+        .map((item) => item.text)
+        .join("\n\n");
+
+      return {
+        id: response.response.id || Date.now().toString(),
+        content: textContents || "No text content found in response",
+        timestamp: new Date().toISOString(),
+        type: "text",
+      };
+    }
+
+    return {
+      id: response.id || Date.now().toString(),
+      content: response.response || response.content || response.result || "",
+      timestamp: response.timestamp || new Date().toISOString(),
+      type: "text",
+    };
+  }
+
+  // Handle the Anthropic API specific format (response.completion)
+  if (response.completion) {
+    return {
+      id: response.id || Date.now().toString(),
+      content: response.completion || "",
+      timestamp: new Date().toISOString(),
+      type: "text",
     };
   }
 
@@ -62,38 +158,6 @@ export const parseMcpResponse = (response) => {
 };
 
 /**
- * Creates a context object for MCP
- * @param {Object} pageInfo - Information about the current page
- * @returns {Object} - MCP context object
- */
-export const createMcpContext = (pageInfo) => {
-  return {
-    type: "page_context",
-    url: pageInfo.url,
-    title: pageInfo.title,
-    selection: pageInfo.selection || "",
-    html: pageInfo.html,
-    metadata: {
-      source: "chrome_extension",
-      timestamp: new Date().toISOString(),
-    },
-  };
-};
-
-/**
- * Creates a chat history object for MCP
- * @param {Array} messages - Chat history messages
- * @returns {Array} - Formatted messages for MCP
- */
-export const formatChatHistory = (messages) => {
-  return messages.map((msg) => ({
-    role: msg.sender === "user" ? "user" : "assistant",
-    content: msg.content,
-    timestamp: msg.timestamp,
-  }));
-};
-
-/**
  * Validates if a string is a valid MCP server URL
  * @param {string} url - URL to validate
  * @returns {boolean} - Whether the URL is valid
@@ -114,7 +178,7 @@ export const isValidMcpServerUrl = (url) => {
  */
 export const checkMcpServerAvailability = async (url) => {
   try {
-    const response = await fetch(`${url}/v1/health`, {
+    const response = await fetch(`${url}/api/health`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

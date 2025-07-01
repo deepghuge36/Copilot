@@ -7,7 +7,7 @@ const ConnectionStatus = ({ status }) => {
 
   switch (status) {
     case "connected":
-      statusText = "Connected to MCP Server";
+      statusText = "Connected";
       statusClass = "connected";
       break;
     case "connecting":

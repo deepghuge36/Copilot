@@ -130,6 +130,9 @@ export const ChatProvider = ({ children }) => {
         );
       });
 
+      // No need to parse the response again - it's already been parsed in background.js
+      console.log("Response received in ChatContext:", response);
+
       // Add bot response to chat
       const botMessage = {
         id: response.id || Date.now().toString() + "-response",

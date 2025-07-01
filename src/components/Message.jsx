@@ -1,7 +1,10 @@
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "../styles/message.css";
 
 const Message = ({ message }) => {
+  console.log("Rendering message:", message);
   const { content, sender, timestamp } = message;
   const isUser = sender === "user";
 
@@ -17,7 +20,13 @@ const Message = ({ message }) => {
       }`}
     >
       <div className={`message ${isUser ? "user-message" : "bot-message"}`}>
-        <div className="message-content">{content}</div>
+        <div className="message-content">
+          {isUser ? (
+            content
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          )}
+        </div>
         <div className="message-timestamp">{formattedTime}</div>
       </div>
     </div>

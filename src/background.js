@@ -1,5 +1,10 @@
 // Background script for the Chrome extension
 // This runs in the background and manages communication with MCP backend
+// Note: This is a service worker context - document/window references are not available
+
+// Import MCP utilities directly at the top level to avoid dynamic imports
+// which can cause issues in service workers
+import { formatMcpMessage, parseMcpResponse } from "./utils/mcpUtils.js";
 
 // Initialize connection with the MCP backend
 chrome.runtime.onInstalled.addListener(() => {
@@ -7,7 +12,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
   // Set default configuration
   chrome.storage.local.set({
-    mcpServerUrl: "http://10.90.21.212:8000/mcp/", // Default MCP server URL
+    mcpServerUrl: "http://10.90.23.45:3000", // Default MCP server URL
     connectionStatus: "disconnected",
     settings: {
       autoConnect: true,
@@ -56,12 +61,14 @@ async function connectToMcp(serverUrl) {
     const serverConfig = { url: serverUrl };
 
     // Try to establish a connection with the MCP server
-    const response = await fetch(`${serverUrl}/v1/health`, {
+    const response = await fetch(`${serverUrl}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
     });
+
+    console.log("MCP server response status:", response.status);
 
     if (!response.ok) {
       throw new Error(
@@ -131,14 +138,6 @@ async function disconnectFromMcp() {
 
 async function sendMessageToMcp(content) {
   try {
-    // Import MCP utilities
-    const {
-      formatMcpMessage,
-      parseMcpResponse,
-      createMcpContext,
-      formatChatHistory,
-    } = await import("./utils/mcpUtils.js");
-
     // Get the server URL from storage
     const storageData = await new Promise((resolve) => {
       chrome.storage.local.get(["mcpServerUrl", "serverConfig"], resolve);
@@ -155,76 +154,21 @@ async function sendMessageToMcp(content) {
 
     console.log("Sending message to MCP server:", content);
 
-    // Get the current active tab for context
-    const tabs = await new Promise((resolve) => {
-      chrome.tabs.query({ active: true, currentWindow: true }, resolve);
-    });
-
-    let pageContext = null;
-
-    // Get page content from content script if available
-    if (tabs && tabs.length > 0) {
-      try {
-        const pageInfo = await new Promise((resolve, reject) => {
-          chrome.tabs.sendMessage(
-            tabs[0].id,
-            { action: "getPageContent" },
-            (response) => {
-              if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-              } else {
-                resolve(
-                  response || {
-                    url: tabs[0].url,
-                    title: tabs[0].title,
-                  }
-                );
-              }
-            }
-          );
-        });
-
-        pageContext = createMcpContext(pageInfo);
-      } catch (e) {
-        console.warn("Failed to get page context:", e);
-        // Fallback to basic context
-        if (tabs[0]) {
-          pageContext = createMcpContext({
-            url: tabs[0].url,
-            title: tabs[0].title,
-          });
-        }
-      }
-    }
-
-    // Get message history from storage if needed
-    // const messageHistory = await new Promise(resolve => {
-    //   chrome.storage.local.get(['messageHistory'], result => {
-    //     resolve(result.messageHistory || []);
-    //   });
-    // });
-
     // Format user message
     const userMessage = formatMcpMessage(content);
 
-    // Create the MCP request payload
+    // Create the MCP request payload according to the Anthropic API endpoint format
     const payload = {
-      messages: [
-        // ...formatChatHistory(messageHistory.slice(-5)), // Last 5 messages for context
-        userMessage,
-      ],
-      context: pageContext,
-      // Add any other MCP parameters your server supports
-      stream: false, // Set to true if your server supports streaming
+      prompt: content,
     };
 
+    console.log("Sending payload to Anthropic API endpoint:", payload);
+
     // Send the request to the MCP server
-    const response = await fetch(`${serverUrl}/v1/chat/completions`, {
+    const response = await fetch(`${serverUrl}/api/llm/anthropic`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Add any authentication headers needed for your MCP server
-        // 'Authorization': `Bearer ${serverConfig.apiKey}`
       },
       body: JSON.stringify(payload),
     });
@@ -241,14 +185,31 @@ async function sendMessageToMcp(content) {
     }
 
     const data = await response.json();
-    console.log("MCP server response:", data);
+    console.log("MCP server response:", JSON.stringify(data, null, 2));
 
     // Parse the response using our utility
     const formattedResponse = parseMcpResponse(data);
+    console.log("Formatted response for UI:", formattedResponse);
 
     return formattedResponse;
   } catch (error) {
     console.error("MCP service error:", error);
+
+    // Return a mock response for testing when the MCP server is unavailable
+    if (
+      error.message.includes("Failed to fetch") ||
+      error.message.includes("Network Error")
+    ) {
+      console.log("MCP server unavailable, returning mock response");
+      return {
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        content:
+          "This is a mock response for testing. The actual server appears to be unavailable right now. Please check your connection settings.",
+        type: "text",
+      };
+    }
+
     // Return a formatted error message that can be displayed to the user
     return {
       id: Date.now().toString(),

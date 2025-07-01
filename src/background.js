@@ -172,7 +172,7 @@ async function sendMessageToMcp(content) {
     console.log("Sending payload to Anthropic API endpoint:", payload);
 
     // Send the request to the MCP server
-    const response = await fetch(`${serverUrl}/api/llm/anthropic`, {
+    const response = await fetch(`${serverUrl}/api/llm/anthropic-mcp`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -282,6 +282,7 @@ async function getActiveTabPageText() {
 
       // Format the response in a readable way
       const formattedText = `
+      Create a Poll for the following page:
 Page Title: ${response.title}
 URL: ${response.url}
 Timestamp: ${response.timestamp}

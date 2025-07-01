@@ -1,0 +1,135 @@
+.settings-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  padding: 15px;
+  overflow-y: auto;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-panel h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.settings-section {
+  margin-bottom: 20px;
+}
+
+.settings-section h3 {
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+}
+
+.form-help {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+.form-group.checkbox {
+  display: flex;
+  align-items: center;
+}
+
+.form-group.checkbox label {
+  margin: 0 0 0 8px;
+}
+
+.connection-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.connect-button,
+.disconnect-button,
+.save-button,
+.cancel-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.connect-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.connect-button:hover:not(:disabled) {
+  background-color: #3b78e7;
+}
+
+.disconnect-button {
+  background-color: #f1f3f4;
+  color: #202124;
+}
+
+.disconnect-button:hover:not(:disabled) {
+  background-color: #e8eaed;
+}
+
+.settings-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+}
+
+.save-button {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.save-button:hover {
+  background-color: #3b78e7;
+}
+
+.cancel-button {
+  background-color: #f1f3f4;
+  color: #202124;
+}
+
+.cancel-button:hover {
+  background-color: #e8eaed;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

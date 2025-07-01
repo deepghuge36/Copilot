@@ -166,7 +166,82 @@ export const ChatProvider = ({ children }) => {
     disconnect,
     sendMessage,
     clearChat,
+    copyAndSendPageText,
   };
+
+  // Function to copy page text and send it to the AI
+  async function copyAndSendPageText() {
+    try {
+      if (connectionStatus !== "connected") {
+        throw new Error("Not connected to MCP server");
+      }
+
+      setLoading(true);
+
+      // Add user message indicating page text is being copied
+      const initialMessage = {
+        id: Date.now().toString() + "-copying",
+        content: "📄 Copying page text...",
+        sender: "system",
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prevMessages) => [...prevMessages, initialMessage]);
+
+      // Request the page text from the background script
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: "GET_PAGE_TEXT" }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (!response.success) {
+            reject(new Error(response.error || "Failed to get page text"));
+          } else {
+            resolve(response.data);
+          }
+        });
+      });
+
+      // Remove the "copying" message
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== initialMessage.id)
+      );
+
+      // Add user message indicating page text was copied
+      const userMessage = {
+        id: Date.now().toString(),
+        content: "📄 I've copied the current page text for analysis",
+        sender: "user",
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+      // Send the page text to the AI
+      await sendMessage(response);
+
+      return true;
+    } catch (error) {
+      console.error("Failed to copy page text:", error);
+      setLoading(false);
+
+      // Add error message to chat
+      const errorMessage = {
+        id: Date.now().toString() + "-error",
+        content: `⚠️ Error copying page text: ${error.message}`,
+        sender: "system",
+        timestamp: new Date().toISOString(),
+      };
+
+      // Remove any "copying" message if it exists
+      setMessages((prevMessages) =>
+        prevMessages
+          .filter((msg) => !msg.id.includes("-copying"))
+          .concat([errorMessage])
+      );
+
+      throw error;
+    }
+  }
 
   return (
     <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>

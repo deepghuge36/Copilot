@@ -19,7 +19,8 @@
   gap: 8px;
 }
 
-.settings-button {
+.settings-button,
+.copy-page-button {
   background: none;
   border: none;
   font-size: 1.2rem;
@@ -33,6 +34,12 @@
   transition: background-color 0.2s;
 }
 
-.settings-button:hover {
+.settings-button:hover,
+.copy-page-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+.copy-page-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

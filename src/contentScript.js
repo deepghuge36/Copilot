@@ -3,17 +3,38 @@
 
 console.log("React Chatbox Extension content script loaded");
 
+// Function to extract all text from the current page
+function extractPageText() {
+  // Get the page's title and URL
+  const title = document.title;
+  const url = window.location.href;
+
+  // Get all text content from the body
+  const bodyText = document.body.innerText || "";
+
+  // Get any selected text
+  const selection = window.getSelection().toString();
+
+  return {
+    title,
+    url,
+    bodyText,
+    selection,
+    timestamp: new Date().toISOString(),
+  };
+}
+
 // Listen for messages from the background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Respond to ping to confirm content script is loaded
+  if (message.action === "ping") {
+    sendResponse({ status: "ok" });
+    return true;
+  }
+
   if (message.action === "getPageContent") {
-    // Basic page context without extracting all text
-    const pageContent = {
-      title: document.title,
-      url: window.location.href,
-      selection: window.getSelection().toString(),
-      metaDescription:
-        document.querySelector('meta[name="description"]')?.content || "",
-    };
+    // Extract all text from the page
+    const pageContent = extractPageText();
     sendResponse(pageContent);
   }
 

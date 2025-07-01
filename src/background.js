@@ -44,6 +44,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((error) => sendResponse({ success: false, error: error.message }));
     return true;
   }
+
+  if (message.type === "GET_PAGE_TEXT") {
+    getActiveTabPageText()
+      .then((pageText) => sendResponse({ success: true, data: pageText }))
+      .catch((error) => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
 });
 
 // MCP connection functions
@@ -217,5 +224,81 @@ async function sendMessageToMcp(content) {
       content: `Error: ${error.message}`,
       type: "error",
     };
+  }
+}
+
+// Function to get text content from the active tab
+async function getActiveTabPageText() {
+  try {
+    // Get the active tab
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tabs || tabs.length === 0) {
+      throw new Error("No active tab found");
+    }
+
+    const activeTab = tabs[0];
+
+    // Check if we can access the tab (some URLs like chrome://, extension://, etc. can't be accessed)
+    if (!activeTab.url || !activeTab.url.startsWith("http")) {
+      throw new Error(
+        "Cannot access this page. Only http/https pages are supported."
+      );
+    }
+
+    // Ensure the content script is injected
+    try {
+      // First try messaging - this will work if the content script is already there
+      const response = await chrome.tabs
+        .sendMessage(activeTab.id, {
+          action: "ping",
+        })
+        .catch(() => null);
+
+      // If no response, inject the content script
+      if (!response) {
+        console.log("Content script not detected, injecting it now...");
+        await chrome.scripting.executeScript({
+          target: { tabId: activeTab.id },
+          files: ["contentScript.js"],
+        });
+
+        // Wait a short time for the script to initialize
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.warn("Error checking/injecting content script:", error);
+      // Continue anyway, we'll catch any issues in the next step
+    }
+
+    // Now try to get the page content
+    try {
+      const response = await chrome.tabs.sendMessage(activeTab.id, {
+        action: "getPageContent",
+      });
+
+      if (!response) {
+        throw new Error("No response from content script");
+      }
+
+      // Format the response in a readable way
+      const formattedText = `
+Page Title: ${response.title}
+URL: ${response.url}
+Timestamp: ${response.timestamp}
+
+CONTENT:
+${response.bodyText}
+      `.trim();
+
+      return formattedText;
+    } catch (error) {
+      console.error("Error getting page content:", error);
+      throw new Error(
+        `Failed to get page content: ${error.message}. Please refresh the page and try again.`
+      );
+    }
+  } catch (error) {
+    console.error("Error getting page text:", error);
+    throw error;
   }
 }
